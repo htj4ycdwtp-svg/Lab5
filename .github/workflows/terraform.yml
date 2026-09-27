@@ -27,7 +27,15 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan
+        run: terraform plan -out=tfplan
+
+      - name: Upload Terraform Plan
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: tfplan
+          retention-days: 1
 
   apply:
     needs: plan
@@ -46,5 +54,11 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v5
+        with:
+          name: terraform-plan
+          path: .
+
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: terraform apply tfplan
